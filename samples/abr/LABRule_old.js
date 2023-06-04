@@ -29,25 +29,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*global dashjs*/
+var LABRule;
 
-let LABRule;
+const MINIMUM_BUFFER_S = 10; // never add artificial delays if buffer is less than MINIMUM_BUFFER_S.
+const MINIMUM_BUFFER_PER_BITRATE_LEVEL_S = 2;
 
-function LABRuleClass() {
+// Rule that selects the rates with look-ahead-buffer algorithm
+function LABRuleClass(config) {
 
     let factory = dashjs.FactoryMaker;
     let SwitchRequest = factory.getClassFactoryByName('SwitchRequest');
+    let MetricsModel = factory.getSingletonFactoryByName('MetricsModel');
     let DashMetrics = factory.getSingletonFactoryByName('DashMetrics');
-    let DashManifestModel = factory.getSingletonFactoryByName('DashManifestModel');
     let StreamController = factory.getSingletonFactoryByName('StreamController');
     let Debug = factory.getSingletonFactoryByName('Debug');
 
     let context = this.context;
     let instance,
-        logger;
+	stateDict,
+	logger;
 
     function setup() {
-        logger = Debug(context).getInstance().getLogger(instance);
+	logger = Debug(context).getInstance().getLogger(instance);
     }
 
     function getBytesLength(request) {
@@ -56,6 +59,12 @@ function LABRuleClass() {
         }, 0);
     }
 
+    function utilitiesFromBitrates(bitrates) {
+        return bitrates.map(b => Math.log(b));
+        // no need to worry about offset, utilities will be offset (uniformly) anyway later
+    }
+
+    // NOTE: in live streaming, the real buffer level can drop below minimumBufferS, but bola should not stick to lowest bitrate by using a placeholder buffer level
     function calculateBolaParameters(stableBufferTime, bitrates, utilities) {
         const highestUtilityIndex = utilities.reduce((highestIndex, u, uIndex) => (u > utilities[highestIndex] ? uIndex : highestIndex), 0);
 
@@ -147,74 +156,31 @@ function LABRuleClass() {
         return quality;
     }
 
+    // Implement look-ahead algorithm
     function getMaxIndex(rulesContext) {
+        // here you can get some informations aboit metrics for example, to implement the rule
+        let metricsModel = MetricsModel(context).getInstance();
+        var mediaType = rulesContext.getMediaInfo().type;
+        var metrics = metricsModel.getMetricsFor(mediaType, true);
 
-        let mediaType = rulesContext.getMediaInfo().type;
+        const state = getState(rulesContext);
+        const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
+	const abrController = rulesContext.getAbrController();
+        const throughputHistory = abrController.getThroughputHistory();
+	const throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
+	const segmentDuration = rulesContext.getRepresentationInfo().fragmentDuration;
 
-        let dashMetrics = DashMetrics(context).getInstance();
-        let dashManifest = DashManifestModel(context).getInstance();
-        let streamController = StreamController(context).getInstance();
-        let abrController = rulesContext.getAbrController();
-        let current = abrController.getQualityFor(mediaType, streamController.getActiveStreamInfo().id);
+        // Printing metrics here as a reference
+        console.log(metrics);
 
-        let state = getState(rulesContext);
-        let bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
-        let throughputHistory = abrController.getThroughputHistory();
-        let throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
-        let segmentDuration = rulesContext.getRepresentationInfo().fragmentDuration;
+	let quality = getQualityFromLABLevel(state, bufferLevel, throughput, segmentDuration)
 
-        let requests = dashMetrics.getHttpRequests(mediaType),
-            lastRequest = null,
-            currentRequest = null,
-            downloadTime,
-            totalTime,
-            calculatedBandwidth,
-            currentBandwidth,
-            latencyInBandwidth,
-            switchUpRatioSafetyFactor,
-            currentRepresentation,
-            count,
-            bandwidths = [],
-            i,
-            quality = SwitchRequest.NO_CHANGE,
-            priority = SwitchRequest.PRIORITY.DEFAULT,
-            totalBytesLength = 0;
-
-        latencyInBandwidth = true;
-        switchUpRatioSafetyFactor = 1.5;
-        logger.info("[CustomRules][" + mediaType + "][LABRule] Checking download ratio rule... (current = " + current + ")");
-
-        if (!requests) {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] No metrics, bailing.");
-            return SwitchRequest(context).create();
-        }
-
-
-        // Get last valid request
-        i = requests.length - 1;
-        while (i >= 0 && lastRequest === null) {
-            currentRequest = requests[i];
-            if (currentRequest._tfinish && currentRequest.trequest && currentRequest.tresponse && currentRequest.trace && currentRequest.trace.length > 0) {
-                lastRequest = requests[i];
-            }
-            i--;
-        }
-
-        if (lastRequest === null) {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] No valid requests made for this stream yet, bailing.");
-            return SwitchRequest(context).create();
-        }
-
-        if (lastRequest.type !== 'MediaSegment') {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] Last request is not a media segment, bailing.");
-            return SwitchRequest(context).create();
-        }
-
-        quality = getQualityFromLABLevel(state, bufferLevel, throughput, segmentDuration);
-        priority = SwitchRequest.PRIORITY.STRONG;
-
-        logger.info("[CustomRules] SwitchRequest: quality=" + q + "/" + (count - 1) + " (" + bandwidths[quality] + ")"/* + ", priority=" + priority*/);
-        return SwitchRequest(context).create(quality, { name: LABRuleClass.__dashjs_factory_name }, priority);
+        // Ask to switch to the lowest bitrate
+        let switchRequest = SwitchRequest(context).create();
+        switchRequest.quality = quality;
+        switchRequest.reason = 'LAB rule.';
+        switchRequest.priority = SwitchRequest.PRIORITY.STRONG;
+        return switchRequest;
     }
 
     instance = {
@@ -228,3 +194,4 @@ function LABRuleClass() {
 
 LABRuleClass.__dashjs_factory_name = 'LABRule';
 LABRule = dashjs.FactoryMaker.getClassFactory(LABRuleClass);
+
