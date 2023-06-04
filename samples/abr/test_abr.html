@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Custom ABR Rules</title>
+    <title>Configuration of ABR Rules</title>
 
     <script src="../../dist/dash.all.debug.js"></script>
 
@@ -16,9 +16,7 @@
             height: 360px;
         }
     </style>
-
-    <script src="DownloadRatioRule.js" class="code"></script>
-
+    
     <script class="code">
         function init() {
             var video,
@@ -27,25 +25,29 @@
 
             video = document.querySelector("video");
             player = dashjs.MediaPlayer().create();
-
-            /* don't use dash.js default rules */
+            
             player.updateSettings({
-                'streaming': {
-                    'abr': {
-                        'useDefaultABRRules': false
+                streaming: {
+                    abr: {
+                        useDefaultABRRules: true,
+                        ABRStrategy: 'abrBola',
+                        additionalAbrRules: {
+                            insufficientBufferRule: true,
+                            switchHistoryRule: false,
+                            droppedFramesRule: false,
+                            abandonRequestsRule: false
+                        }
+                        
                     }
                 }
             });
-
-            /* add my custom quality switch rule. Look at LowestBitrateRule.js to know more */
-            /* about the structure of a custom rule */
-            player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
+            
 
             player.initialize(video, url, true);
 
 	    player.updateSettings({
                 'debug': {
-                    'logLevel': dashjs.Debug.LOG_LEVEL_INFO
+                    'logLevel': dashjs.Debug.LOG_LEVEL_DEBUG
                 }
             });
         }
@@ -63,8 +65,8 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="h-100 p-5 bg-light border rounded-3">
-                    <h3>Custom ABR Rules</h3>
-                    <p>Example showing how to create and define custom ABR rules in dash.js.</p>
+                    <h3>Configuration of ABR Rules</h3>
+                    <p>Example showing how to define the target ABR rules in dash.js. In this demo we enable the throughput based ABR decision logic. In addition, the InsufficientBufferRule is enabled.</p>
                 </div>
             </div>
             <div class="col-md-8">

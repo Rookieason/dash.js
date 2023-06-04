@@ -65,6 +65,8 @@ function LowestBitrateRuleClass() {
             return SwitchRequest(context).create();
         }
 
+	logger.Info('[LowestBitrateRule] Switch to the lowest bitrate.');
+
         // Ask to switch to the lowest bitrate
         let switchRequest = SwitchRequest(context).create();
         switchRequest.quality = 0;
