@@ -17,7 +17,7 @@
         }
     </style>
 
-    <script src="DownloadRatioRule.js" class="code"></script>
+    <script src="LABRule.js" class="code"></script>
 
     <script class="code">
         function init() {
@@ -39,7 +39,7 @@
 
             /* add my custom quality switch rule. Look at LowestBitrateRule.js to know more */
             /* about the structure of a custom rule */
-            player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule);
+            player.addABRCustomRule('qualitySwitchRules', 'LABRule', LABRule);
 
             player.initialize(video, url, true);
 

@@ -140,10 +140,10 @@ function LABRuleClass() {
 	    bitrate = state.bitrates[quality];
 	    LABLevel = bufferLevel + (1 - bitrate / throughput / 1000) * segmentDuration;
         }
-        logger.info('[LABRule] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
-        //logger.debug('[LABRule] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
-        logger.info('[LABRule] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
-        //logger.debug('[LABRule] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
+        logger.debug('[LABRule] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
+        logger.debug('[LABRule] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
+        logger.debug('[LABRule] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
+        logger.debug('[LABRule] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
         return quality;
     }
 
@@ -182,10 +182,10 @@ function LABRuleClass() {
 
         latencyInBandwidth = true;
         switchUpRatioSafetyFactor = 1.5;
-        logger.info("[CustomRules][" + mediaType + "][LABRule] Checking download ratio rule... (current = " + current + ")");
+        logger.debug("[CustomRules][" + mediaType + "][LABRule] Checking download ratio rule... (current = " + current + ")");
 
         if (!requests) {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] No metrics, bailing.");
+            logger.debug("[CustomRules][" + mediaType + "][LABRule] No metrics, bailing.");
             return SwitchRequest(context).create();
         }
 
@@ -201,19 +201,19 @@ function LABRuleClass() {
         }
 
         if (lastRequest === null) {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] No valid requests made for this stream yet, bailing.");
+            logger.debug("[CustomRules][" + mediaType + "][LABRule] No valid requests made for this stream yet, bailing.");
             return SwitchRequest(context).create();
         }
 
         if (lastRequest.type !== 'MediaSegment') {
-            logger.info("[CustomRules][" + mediaType + "][LABRule] Last request is not a media segment, bailing.");
+            logger.debug("[CustomRules][" + mediaType + "][LABRule] Last request is not a media segment, bailing.");
             return SwitchRequest(context).create();
         }
 
         quality = getQualityFromLABLevel(state, bufferLevel, throughput, segmentDuration);
         priority = SwitchRequest.PRIORITY.STRONG;
 
-        logger.info("[CustomRules] SwitchRequest: quality=" + q + "/" + (count - 1) + " (" + bandwidths[quality] + ")"/* + ", priority=" + priority*/);
+        logger.debug("[CustomRules] SwitchRequest: quality=" + q + "/" + (count - 1) + " (" + bandwidths[quality] + ")"/* + ", priority=" + priority*/);
         return SwitchRequest(context).create(quality, { name: LABRuleClass.__dashjs_factory_name }, priority);
     }
 

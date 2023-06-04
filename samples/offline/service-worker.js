@@ -45,6 +45,7 @@ let urlsToCache = [
     'app/lib/jquery/jquery-3.1.1.min.map',
     'app/rules/DownloadRatioRule.js',
     'app/rules/ThroughputRule.js',
+    'app/rules/LABRule.js',
     'app/contributors.json',
     'app/main.js',
     '../dash-if-reference-player/app/sources.json',

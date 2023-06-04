@@ -489,9 +489,11 @@ app.controller('DashController', function ($scope, $timeout, $q, sources, contri
         if ($scope.customABRRulesSelected) {
             $scope.player.addABRCustomRule('qualitySwitchRules', 'DownloadRatioRule', DownloadRatioRule); /* jshint ignore:line */
             $scope.player.addABRCustomRule('qualitySwitchRules', 'ThroughputRule', CustomThroughputRule); /* jshint ignore:line */
+            $scope.player.addABRCustomRule('qualitySwitchRules', 'LABRule', LABRule); /* jshint ignore:line */
         } else {
             $scope.player.removeABRCustomRule('DownloadRatioRule');
             $scope.player.removeABRCustomRule('ThroughputRule');
+            $scope.player.removeABRCustomRule('LABRule');
         }
     };
 
