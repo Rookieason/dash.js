@@ -186,28 +186,18 @@ function BolaRule(config) {
     }
 
     // The core idea of BOLA.
-    function getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration) {
+    function getQualityFromBufferLevel(bolaState, bufferLevel) {
         const bitrateCount = bolaState.bitrates.length;
         let quality = NaN;
-        let bitrate = NaN;
-        let prev_bitrate = NaN;
-        let LABLevel = bufferLevel;
-
-        while (isNaN(bitrate) || bitrate != prev_bitrate) {
-            let score = NaN;
-            for (let i = 0; i < bitrateCount; ++i) {
-                let s = (bolaState.Vp * (bolaState.utilities[i] + bolaState.gp) - LABLevel) / bolaState.bitrates[i];
-                if (isNaN(score) || s >= score) {
-                    score = s;
-                    quality = i;
-                }
+        let score = NaN;
+        for (let i = 0; i < bitrateCount; ++i) {
+            let s = (bolaState.Vp * (bolaState.utilities[i] + bolaState.gp) - bufferLevel) / bolaState.bitrates[i];
+            if (isNaN(score) || s >= score) {
+                score = s;
+                quality = i;
             }
-	    prev_bitrate = bitrate;
-	    bitrate = bolaState.bitrates[quality];
-	    LABLevel = bufferLevel + (1 - bitrate / throughput / 1000) * segmentDuration;
         }
-        //logger.info('[LABola] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
-        //logger.info('[LABola] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
+        logger.info('[BolaRule] Just for test just for testjust for testjust for testjust for testjust for testjust for testjust for testjust for testjust for test.');
         return quality;
     }
 
@@ -411,7 +401,6 @@ function BolaRule(config) {
         const streamId = streamInfo ? streamInfo.id : null;
         const isDynamic = streamInfo && streamInfo.manifestInfo && streamInfo.manifestInfo.isDynamic;
         const useBufferOccupancyABR = rulesContext.useBufferOccupancyABR();
-        const segmentDuration = rulesContext.getRepresentationInfo().fragmentDuration;
         switchRequest.reason = switchRequest.reason || {};
 
         if (!useBufferOccupancyABR) {
@@ -467,7 +456,7 @@ function BolaRule(config) {
 
                 updatePlaceholderBuffer(bolaState, mediaType);
 
-                quality = getQualityFromBufferLevel(bolaState, bufferLevel + bolaState.placeholderBuffer, throughput, segmentDuration);
+                quality = getQualityFromBufferLevel(bolaState, bufferLevel + bolaState.placeholderBuffer);
 
                 // we want to avoid oscillations
                 // We implement the "BOLA-O" variant: when network bandwidth lies between two encoded bitrate levels, stick to the lowest level.

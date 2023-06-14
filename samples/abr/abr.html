@@ -30,15 +30,18 @@
                 streaming: {
                     abr: {
                         useDefaultABRRules: true,
-                        ABRStrategy: 'abrThroughput',
+                        ABRStrategy: 'abrBola',
                         additionalAbrRules: {
-                            insufficientBufferRule: true,
+                            insufficientBufferRule: false,
                             switchHistoryRule: false,
                             droppedFramesRule: false,
                             abandonRequestsRule: false
-                        }
-                        
+                        },
+                        fetchThroughputCalculationMode: 'abrFetchThroughputCalculationAAST'
                     }
+                },
+                'debug': {
+                    'logLevel': dashjs.Debug.LOG_LEVEL_INFO
                 }
             });
             
