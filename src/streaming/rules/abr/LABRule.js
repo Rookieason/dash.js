@@ -206,14 +206,14 @@ function BolaRule(config) {
 	    prev_bitrate = bitrate;
 	    bitrate = bolaState.bitrates[quality];
 	    LABLevel = bufferLevel + (1 - bitrate / throughput / 1000) * segmentDuration;
-            //logger.info('[LABola] while loop...');
+            logger.info('[LABola] while loop...');
             maxIte = maxIte - 1;
             if (maxIte < 0) {
                 break;
             }
         }
         logger.info('[LABola] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
-        //logger.info('[LABola] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
+        logger.info('[LABola] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
         return quality;
     }
 
@@ -473,8 +473,7 @@ function BolaRule(config) {
 
                 updatePlaceholderBuffer(bolaState, mediaType);
 
-                quality = getQualityFromBufferLevel(bolaState, bufferLevel + bolaState.placeholderBuffer, throughput, segmentDuration);
-                //quality = getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration);
+                quality = getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration);
 
                 // we want to avoid oscillations
                 // We implement the "BOLA-O" variant: when network bandwidth lies between two encoded bitrate levels, stick to the lowest level.
@@ -483,7 +482,7 @@ function BolaRule(config) {
                     // only intervene if we are trying to *increase* quality to an *unsustainable* level
                     // we are only avoid oscillations - do not drop below last quality
 
-                    quality = Math.max(qualityForThroughput, bolaState.lastQuality);
+                    //quality = Math.max(qualityForThroughput, bolaState.lastQuality);
                 }
 
                 // We do not want to overfill buffer with low quality chunks.
@@ -500,7 +499,7 @@ function BolaRule(config) {
 
                     if (quality < abrController.getMaxAllowedIndexFor(mediaType, streamId)) {
                         // At top quality, allow schedule controller to decide how far to fill buffer.
-                        scheduleController.setTimeToLoadDelay(1000 * delayS);
+                        //scheduleController.setTimeToLoadDelay(1000 * delayS);
                     } else {
                         delayS = 0;
                     }
