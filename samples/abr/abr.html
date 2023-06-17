@@ -28,8 +28,10 @@
             
             player.updateSettings({
                 streaming: {
-                    stableBufferTime: 30,
-                    bufferTimeAtTopQuality: 30,
+                    buffer: {
+                        stableBufferTime: 30,
+                        bufferTimeAtTopQuality: 30
+                    },
                     abr: {
                         ABRStrategy: 'abrBola',
                         additionalAbrRules: {
