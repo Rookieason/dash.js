@@ -473,8 +473,8 @@ function BolaRule(config) {
 
                 updatePlaceholderBuffer(bolaState, mediaType);
 
-                quality = getQualityFromBufferLevel(bolaState, bufferLevel + bolaState.placeholderBuffer, throughput, segmentDuration);
-                //quality = getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration);
+                //quality = getQualityFromBufferLevel(bolaState, bufferLevel + bolaState.placeholderBuffer, throughput, segmentDuration);
+                quality = getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration);
 
                 // we want to avoid oscillations
                 // We implement the "BOLA-O" variant: when network bandwidth lies between two encoded bitrate levels, stick to the lowest level.
