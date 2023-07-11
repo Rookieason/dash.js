@@ -82,11 +82,11 @@ function AbandonRequestsRule(config) {
         if (!isNaN(req.index)) {
             setFragmentRequestDict(mediaType, req.index);
 
-            const stableBufferTime = mediaPlayerModel.getStableBufferTime();
+	    //const stableBufferTime = mediaPlayerModel.getStableBufferTime();
             const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
-            if ( bufferLevel > stableBufferTime ) {
-                return switchRequest;
-            }
+            //if ( bufferLevel > stableBufferTime ) {
+            //    return switchRequest;
+            //}
 
             const fragmentInfo = fragmentDict[mediaType][req.index];
             if (fragmentInfo === null || req.firstByteDate === null || abandonDict.hasOwnProperty(fragmentInfo.id)) {
@@ -112,20 +112,25 @@ function AbandonRequestsRule(config) {
                 fragmentInfo.elapsedTime > GRACE_TIME_THRESHOLD &&
                 fragmentInfo.bytesLoaded < fragmentInfo.bytesTotal) {
 
-                const totalSampledValue = throughputArray[mediaType].reduce((a, b) => a + b, 0);
-                fragmentInfo.measuredBandwidthInKbps = Math.round(totalSampledValue / throughputArray[mediaType].length);
-                fragmentInfo.estimatedTimeOfDownload = +((fragmentInfo.bytesTotal * 8 / fragmentInfo.measuredBandwidthInKbps) / 1000).toFixed(2);
-
-                if (fragmentInfo.estimatedTimeOfDownload < fragmentInfo.segmentDuration * ABANDON_MULTIPLIER || rulesContext.getRepresentationInfo().quality === 0 ) {
+		if (rulesContext.getRepresentationInfo().quality === 0 ) {
                     return switchRequest;
                 } else if (!abandonDict.hasOwnProperty(fragmentInfo.id)) {
 
                     const abrController = rulesContext.getAbrController();
+		    //const throughputHistory = abrController.getThroughputHistory();
+                    const totalSampledValue = throughputArray[mediaType].reduce((a, b) => a + b, 0);
+		    const bufferLevel = dashMetrics.getCurrentBufferLevel(mediaType);
+                    //const throughput = throughputHistory.getAverageThroughput(mediaType, isDynamic);
+		
+		    fragmentInfo.measuredBandwidthInKbps = Math.round(totalSampledValue / throughputArray[mediaType].length); // ### This line requires more thought. Maybe we need a better throughput predictor.
+                    fragmentInfo.estimatedTimeOfDownload = +((fragmentInfo.bytesTotal * 8 / fragmentInfo.measuredBandwidthInKbps) / 1000).toFixed(2);
+
+                    const newquality = getQualityFromBufferLevel(bolaState, bufferLevel - segmentDuration, measuredBandwidthInKbps, segmentDuration);
                     const bytesRemaining = fragmentInfo.bytesTotal - fragmentInfo.bytesLoaded;
                     const bitrateList = abrController.getBitrateList(mediaInfo);
-                    const quality = abrController.getQualityForBitrate(mediaInfo, fragmentInfo.measuredBandwidthInKbps * settings.get().streaming.abr.bandwidthSafetyFactor, streamId);
-                    const minQuality = abrController.getMinAllowedIndexFor(mediaType, streamId);
-                    const newQuality = (minQuality !== undefined) ? Math.max(minQuality, quality) : quality;
+                    //const quality = abrController.getQualityForBitrate(mediaInfo, fragmentInfo.measuredBandwidthInKbps * settings.get().streaming.abr.bandwidthSafetyFactor, streamId);
+                    //const minQuality = abrController.getMinAllowedIndexFor(mediaType, streamId);
+                    //const newQuality = (minQuality !== undefined) ? Math.max(minQuality, quality) : quality;
                     const estimateOtherBytesTotal = fragmentInfo.bytesTotal * bitrateList[newQuality].bitrate / bitrateList[abrController.getQualityFor(mediaType, streamId)].bitrate;
 
                     if (bytesRemaining > estimateOtherBytesTotal) {
