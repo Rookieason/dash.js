@@ -706,18 +706,31 @@ function StreamProcessor(config) {
             time: time + safeBufferLevel,
             threshold: 0
         })[0];
+        const ongoingRequests = fragmentModel.getRequests({ state: FragmentModel.FRAGMENT_MODEL_LOADING });
+        if (ongoingRequests && ongoingRequests.length > 0) {
+            let req = ongoingRequests[0];
+            let waste = req.bytesLoaded + request.bytesTotal;
+
+            if (waste > representationInfo.bytesTotal) {
+                return;
+            }
+        }
 
         if (request && !getIsTextTrack()) {
             const bufferLevel = bufferController.getBufferLevel();
             const abandonmentState = abrController.getAbandonmentStateFor(streamInfo.id, type);
 
             // The quality we originally requested was lower than the new quality
-            if (request.quality < representationInfo.quality && bufferLevel >= safeBufferLevel && abandonmentState !== MetricsConstants.ABANDON_LOAD) {
+            //if (request.quality < representationInfo.quality && bufferLevel >= safeBufferLevel && abandonmentState !== MetricsConstants.ABANDON_LOAD) {
+            //if (false && representationInfo.quality == abrController.getMaxAllowedIndexFor(type, streamInfo.id) && bufferLevel >= safeBufferLevel && abandonmentState !== MetricsConstants.ABANDON_LOAD) {
+            //if (representationInfo.quality == abrController.getMaxAllowedIndexFor(type, streamInfo.id) && bufferLevel >= safeBufferLevel && abandonmentState !== MetricsConstants.ABANDON_LOAD) {
+            if (representationInfo.quality == abrController.getMaxAllowedIndexFor(type, streamInfo.id) && bufferLevel >= 20 && abandonmentState !== MetricsConstants.ABANDON_LOAD) {
                 bufferController.updateBufferTimestampOffset(representationInfo)
                     .then(() => {
                         // Abort the current request to avoid inconsistencies and in case a rule such as AbandonRequestRule has forced a quality switch. A quality switch can also be triggered manually by the application.
                         // If we update the buffer values now, or initialize a request to the new init segment, the currently downloading media segment might "work" with wrong values.
                         // Everything that is already in the buffer queue is ok
+                        
                         fragmentModel.abortRequests();
                         const targetTime = time + safeBufferLevel;
                         setExplicitBufferingTime(targetTime);

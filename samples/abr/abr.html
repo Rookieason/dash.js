@@ -27,20 +27,36 @@
             player = dashjs.MediaPlayer().create();
             
             player.updateSettings({
-                streaming: {
-                    stableBufferTime: 30,
-                    bufferTimeAtTopQuality: 30,
+	        streaming: {
+                    abandonLoadTimeout: 0,
+                    fragmentRequestTimeout: 20000000,
+                    manifestRequestTimeout: 20000000,
+                    buffer: {
+                        fastSwitchEnabled: false,
+                        stableBufferTime: 30,
+                        initialBufferLevel: 12,
+                        bufferTimeAtTopQuality: 30,
+                        bufferTimeAtTopQualityLongForm: 30
+                    },
+                    scheduling: {
+                        defaultTimeout: 100
+                    },
                     abr: {
+                        movingAverageMethod: 'ewma',
                         ABRStrategy: 'abrBola',
                         additionalAbrRules: {
                             insufficientBufferRule: false,
-                            switchHistoryRule: false,
-                            droppedFramesRule: false,
-                            abandonRequestsRule: false
+                            switchHistoryRule: true,
+                            droppedFramesRule: true,
+                            abandonRequestsRule: true
+                        },
+                        autoSwitchBitrate: {
+                            audio: true,
+                            video: true
                         }
                     }
                 },
-                'debug': {
+		'debug': {
                     'logLevel': dashjs.Debug.LOG_LEVEL_INFO
                 }
             });

@@ -34,6 +34,8 @@
 import MetricsConstants from '../../constants/MetricsConstants';
 import SwitchRequest from '../SwitchRequest';
 import FactoryMaker from '../../../core/FactoryMaker';
+import FragmentModel from '../../models/FragmentModel';
+//import RepresentationController from '../../dash/controllers/RepresentationController';
 import {HTTPRequest} from '../../vo/metrics/HTTPRequest';
 import EventBus from '../../../core/EventBus';
 import Events from '../../../core/events/Events';
@@ -64,6 +66,8 @@ function BolaRule(config) {
     const dashMetrics = config.dashMetrics;
     const mediaPlayerModel = config.mediaPlayerModel;
     const eventBus = EventBus(context).getInstance();
+    const fragmentModel = config.fragmentModel;
+    const playbackController = config.playbackController;
 
     let instance,
         logger,
@@ -474,6 +478,22 @@ function BolaRule(config) {
                 updatePlaceholderBuffer(bolaState, mediaType);
 
                 quality = getQualityFromBufferLevel(bolaState, bufferLevel, throughput, segmentDuration);
+
+                const time = playbackController.getTime();
+                let safeBufferLevel = 1.5 * segmentDuration;
+                const request = fragmentModel.getRequests({
+		    state: FragmentModel.FRAGMENT_MODEL_EXECUTED,
+		    time: time + safeBufferLevel,
+		    threshold: 0
+                })[0];
+
+                //const abandonmentState = abrController.getAbandonmentStateFor(streamInfo.id, type);
+
+                if (request) {
+                    if (request.quality < quality && bufferLevel >= 1.5 * segmentDuration) {
+                        quality = Math.max(request.quality, getQualityFromBufferLevel(bolaState, bufferLevel - segmentDuration, throughput, segmentDuration));
+                    }
+                }
 
                 // we want to avoid oscillations
                 // We implement the "BOLA-O" variant: when network bandwidth lies between two encoded bitrate levels, stick to the lowest level.
