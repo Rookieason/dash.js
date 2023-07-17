@@ -206,14 +206,14 @@ function BolaRule(config) {
 	    prev_bitrate = bitrate;
 	    bitrate = bolaState.bitrates[quality];
 	    LABLevel = bufferLevel + (1 - bitrate / throughput / 1000) * segmentDuration;
-            logger.info('[LABola] while loop...');
+            //logger.info('[LABola] while loop...');
             maxIte = maxIte - 1;
             if (maxIte < 0) {
                 break;
             }
         }
-        logger.info('[LABola] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
-        logger.info('[LABola] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
+        //logger.info('[LABola] bufferLevel: ' + bufferLevel + 's, LABufferLevel: ' + LABLevel + 's');
+        //logger.info('[LABola] bitrate: ' + bitrate / 1000 + 'kbps, throughput: ' + throughput + 'kbps, segmenDuration: ' + segmentDuration + 's, quality: ' + quality);
         return quality;
     }
 
